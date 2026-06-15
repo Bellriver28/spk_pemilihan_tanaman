@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'input_nilai_screen.dart';
+import 'view_dataset_screen.dart';
+import '../services/pdf_report_service.dart'; // Sesuaikan path ini dengan lokasi file PDF service kamu
 
 class HomeScreen extends StatelessWidget {
-  final Function(int) onNavigate; // Menerima fungsi klik dari MainScreen
+  final Function(int) onNavigate;
 
   const HomeScreen({Key? key, required this.onNavigate}) : super(key: key);
 
@@ -10,46 +11,30 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Selamat datang!', style: TextStyle(color: Colors.grey, fontSize: 14)),
-            Text('SPK Pemilihan', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
-            Text('Tanaman Terbaik', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 20)),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black),
-            onPressed: () {},
-          )
-        ],
-      ),
-      // SAFE AREA: Mencegah bagian atas/bawah ketutupan sistem HP
+      // AppBar dihapus agar tampilan full bersih dari atas
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 20), // Memberi jarak agar tidak menempel ke batas atas HP
+              const Text('Selamat datang!', style: TextStyle(color: Colors.grey, fontSize: 14)),
+              const Text('SPK Pemilihan', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22)),
+              const Text('Tanaman Terbaik', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 22)),
+              const SizedBox(height: 16),
 
-              // --- PERBAIKAN DI SINI: MENGGUNAKAN GAMBAR BANNER DARI FIGMA ---
               Container(
                 height: 150,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  // Ganti 'banner_home.png' sesuai dengan nama file yang Anda save dari Figma
                   image: const DecorationImage(
                     image: AssetImage('assets/images/banner_home.png'),
-                    fit: BoxFit.cover, // Gambar akan memenuhi area kotak dengan rapi
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
-              // ---------------------------------------------------------------
-
               const SizedBox(height: 24),
               Expanded(
                 child: GridView.count(
@@ -58,10 +43,9 @@ class HomeScreen extends StatelessWidget {
                   mainAxisSpacing: 16,
                   childAspectRatio: 1.2,
                   children: [
-                    // Angka di belakang adalah Index Tab (1 = Kriteria, 2 = Alternatif, dst)
                     _buildMenuCard(context, 'Data Kriteria', Icons.list_alt, Colors.green, 1),
                     _buildMenuCard(context, 'Data Alternatif', Icons.park, Colors.green, 2),
-                    _buildMenuCard(context, 'Input Nilai', Icons.grid_on, Colors.blue, -1), // -1 karena tidak ada di Navbar
+                    _buildMenuCard(context, 'View Dataset', Icons.grid_on, Colors.blue, -99),
                     _buildMenuCard(context, 'Proses TOPSIS', Icons.calculate, Colors.orange, 3),
                     _buildMenuCard(context, 'Hasil Ranking', Icons.emoji_events, Colors.amber, 4),
                     _buildMenuCard(context, 'Laporan', Icons.print, Colors.teal, -2),
@@ -77,13 +61,29 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildMenuCard(BuildContext context, String title, IconData icon, Color color, int tabIndex) {
     return InkWell(
-      onTap: () {
-        if (tabIndex >= 0) {
-          // Jika menu tersebut ada di Navbar, geser tab!
+      onTap: () async {
+        if (title == 'Laporan') {
+          // Menampilkan indikator loading saat PDF dibuat
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
+
+          // Generate PDF
+          await PdfReportService.generateAndPrintReport();
+
+          if (context.mounted) Navigator.pop(context); // Menutup dialog loading
+
+        } else if (title == 'View Dataset') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ViewDatasetScreen(onNavigate: onNavigate),
+            ),
+          );
+        } else if (tabIndex >= 0) {
           onNavigate(tabIndex);
-        } else if (title == 'Input Nilai') {
-          // Khusus Input Nilai, tetap buka halaman baru karena tidak ada di Navbar
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const InputNilaiScreen()));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Halaman $title sedang dikembangkan')));
         }

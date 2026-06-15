@@ -5,7 +5,6 @@ import 'package:path_provider/path_provider.dart';
 class DBHelper {
   static Database? _db;
   static const String DB_NAME = 'spk_tanaman_topsis.db';
-
   static const String tableKriteria = 'kriteria';
   static const String tableAlternatif = 'alternatif';
 
@@ -22,7 +21,7 @@ class DBHelper {
   }
 
   void _onCreate(Database db, int version) async {
-    // 1. Tabel Kriteria (C1 s.d C7)
+    // 1. Buat Tabel Kriteria
     await db.execute('''
       CREATE TABLE $tableKriteria(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,37 +31,31 @@ class DBHelper {
       )
     ''');
 
-    // 2. Tabel Alternatif
+    // 2. Buat Tabel Alternatif (Awalnya hanya ID dan Nama)
     await db.execute('''
       CREATE TABLE $tableAlternatif(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nama TEXT,
-        n REAL,
-        p REAL,
-        k REAL,
-        temperature REAL,
-        humidity REAL,
-        ph REAL,
-        rainfall REAL
+        nama TEXT
       )
     ''');
 
-    // Seed Data Kriteria Awal (Sesuai Koreksi: Bobot awal disesuaikan)
+    // 3. Seed Kriteria Awal & Tambah Kolom ke Tabel Alternatif
     List<Map<String, dynamic>> kriteriaAwal = [
-      {'nama': 'Kondisi Tanah (N)', 'bobot': 0.25, 'jenis': 'Benefit'},
-      {'nama': 'Curah Hujan (Rainfall)', 'bobot': 0.20, 'jenis': 'Benefit'},
-      {'nama': 'Suhu (Temperature)', 'bobot': 0.15, 'jenis': 'Benefit'},
-      {'nama': 'Fosfor (P)', 'bobot': 0.15, 'jenis': 'Benefit'},
-      {'nama': 'Kalium (K)', 'bobot': 0.10, 'jenis': 'Benefit'},
-      {'nama': 'Kelembaban (Humidity)', 'bobot': 0.10, 'jenis': 'Benefit'},
-      {'nama': 'Tingkat keasaman (pH)', 'bobot': 0.05, 'jenis': 'Benefit'},
+      {'nama': 'n', 'bobot': 0.30, 'jenis': 'Cost'},
+      {'nama': 'p', 'bobot': 0.25, 'jenis': 'Cost'},
+      {'nama': 'k', 'bobot': 0.25, 'jenis': 'Cost'},
+      {'nama': 'temperature', 'bobot': 0.35, 'jenis': 'Cost'},
+      {'nama': 'humidity', 'bobot': 0.25, 'jenis': 'Cost'},
+      {'nama': 'ph', 'bobot': 0.25, 'jenis': 'Cost'},
+      {'nama': 'rainfall', 'bobot': 0.35, 'jenis': 'Benefit'},
     ];
 
     for (var k in kriteriaAwal) {
       await db.insert(tableKriteria, k);
+      await db.execute("ALTER TABLE $tableAlternatif ADD COLUMN ${k['nama']} REAL DEFAULT 0.0");
     }
 
-    // Seed Data Alternatif (22 Data dari Gambar Excel Lengkap)
+    // 4. Seed Data Alternatif (22 Data Tanaman)
     List<Map<String, dynamic>> datasetExcel = [
       {'nama': 'apple', 'n': 20.8, 'p': 134.22, 'k': 199.89, 'temperature': 22.63, 'humidity': 92.33, 'ph': 5.93, 'rainfall': 112.65},
       {'nama': 'banana', 'n': 100.23, 'p': 82.01, 'k': 50.05, 'temperature': 27.38, 'humidity': 80.36, 'ph': 5.98, 'rainfall': 104.63},
@@ -93,13 +86,16 @@ class DBHelper {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getKriteria() async {
-    var dbClient = await db;
-    return await dbClient.query(tableKriteria);
+  Future<void> addNewKriteriaColumn(String namaKriteria) async {
+    final dbClient = await db;
+    var result = await dbClient.rawQuery("PRAGMA table_info($tableAlternatif)");
+    bool exists = result.any((col) => col['name'] == namaKriteria.toLowerCase());
+
+    if (!exists) {
+      await dbClient.execute("ALTER TABLE $tableAlternatif ADD COLUMN $namaKriteria REAL DEFAULT 0.0");
+    }
   }
 
-  Future<List<Map<String, dynamic>>> getAlternatif() async {
-    var dbClient = await db;
-    return await dbClient.query(tableAlternatif);
-  }
+  Future<List<Map<String, dynamic>>> getKriteria() async => (await db).query(tableKriteria);
+  Future<List<Map<String, dynamic>>> getAlternatif() async => (await db).query(tableAlternatif);
 }

@@ -15,7 +15,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  // Fungsi untuk mengganti tab halaman
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -26,17 +25,16 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     // Daftar halaman yang akan dipanggil oleh Navbar
     final List<Widget> pages = [
-      HomeScreen(onNavigate: _onItemTapped), // Index 0
-      const KriteriaScreen(),                // Index 1
-      const AlternatifScreen(),              // Index 2
-      ProsesScreen(onNavigate: _onItemTapped),// Index 3
-      const HasilScreen(),                   // Index 4
+      HomeScreen(onNavigate: _onItemTapped),      // Index 0
+      KriteriaScreen(onNavigate: _onItemTapped),  // Index 1
+      AlternatifScreen(onNavigate: _onItemTapped),// Index 2
+      ProsesScreen(onNavigate: _onItemTapped),    // Index 3
+      HasilScreen(onNavigate: _onItemTapped),     // Index 4
     ];
 
     return Scaffold(
-      body: pages[_selectedIndex], // Menampilkan halaman sesuai index yang dipilih
+      body: pages[_selectedIndex],
 
-      // SAFE AREA: Inilah kunci agar Navbar tidak ketutupan tombol Home HP
       bottomNavigationBar: SafeArea(
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,

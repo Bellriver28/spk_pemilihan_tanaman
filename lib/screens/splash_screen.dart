@@ -24,28 +24,44 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF2ECC71),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/ilustrasi_pohon.png',
-              width: 150,
-              height: 150,
-              fit: BoxFit.contain,
+      // Menggunakan Container untuk background image
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const AssetImage('assets/images/ilustrasi_pohon.png'),
+            fit: BoxFit.cover, // Membuat gambar menutupi seluruh layar
+            // ColorFilter ini opsional, untuk memastikan teks putih tetap terbaca
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.4), // Gelapkan gambar 40%
+              BlendMode.darken,
             ),
-            // Pindahkan kata 'const' ke masing-masing widget statis di bawahnya
-            const SizedBox(height: 20),
-            const Text(
-              "SPK Pemilihan Tanaman",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+          ),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Ilustrasi sudah jadi background, jadi kita tidak perlu widget Image di sini
+              Text(
+                "SPK Pemilihan Tanaman",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24, // Sedikit diperbesar agar terlihat elegan
+                  shadows: [
+                    Shadow(
+                      blurRadius: 10.0,
+                      color: Colors.black45,
+                      offset: Offset(2.0, 2.0),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

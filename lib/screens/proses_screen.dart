@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ProsesScreen extends StatelessWidget {
-  final Function(int) onNavigate; // Tambahkan fungsi penerima
+  final Function(int) onNavigate; // Fungsi untuk navigasi antar tab
 
   const ProsesScreen({Key? key, required this.onNavigate}) : super(key: key);
 
@@ -12,6 +12,11 @@ class ProsesScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.green[700],
         foregroundColor: Colors.white,
+        // BACK BUTTON KE HOME SCREEN (Index 0)
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => onNavigate(0),
+        ),
         title: const Text('Proses TOPSIS', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: Padding(
@@ -45,7 +50,7 @@ class ProsesScreen extends StatelessWidget {
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('HITUNG TOPSIS NOW', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 onPressed: () {
-                  // PERBAIKAN DI SINI: Cukup geser tab ke index 4 (HasilScreen)
+                  // Pindah ke tab Hasil (Index 4)
                   onNavigate(4);
                 },
               ),

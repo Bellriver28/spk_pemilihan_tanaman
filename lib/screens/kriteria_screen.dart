@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 
 class KriteriaScreen extends StatefulWidget {
-  const KriteriaScreen({Key? key}) : super(key: key);
+  // Tambahkan fungsi onNavigate di sini
+  final Function(int) onNavigate;
+
+  const KriteriaScreen({Key? key, required this.onNavigate}) : super(key: key);
 
   @override
   State<KriteriaScreen> createState() => _KriteriaScreenState();
@@ -19,7 +22,6 @@ class _KriteriaScreenState extends State<KriteriaScreen> {
     _refreshKriteria();
   }
 
-  // Fungsi untuk mengambil data terbaru dari database lokal
   void _refreshKriteria() async {
     final data = await _dbHelper.getKriteria();
     double total = 0.0;
@@ -32,14 +34,13 @@ class _KriteriaScreenState extends State<KriteriaScreen> {
     });
   }
 
-  // Fungsi untuk menghapus kriteria
   void _deleteKriteria(int id) async {
     final db = await _dbHelper.db;
     await db.delete(DBHelper.tableKriteria, where: 'id = ?', whereArgs: [id]);
     _refreshKriteria();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Kriteria berhasil dihapus')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kriteria berhasil dihapus')));
+    }
   }
 
   @override
@@ -49,17 +50,43 @@ class _KriteriaScreenState extends State<KriteriaScreen> {
       appBar: AppBar(
         backgroundColor: Colors.green[700],
         foregroundColor: Colors.white,
+        // BACK BUTTON MENGARAH KE HOME SCREEN (Index 0)
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => widget.onNavigate(0),
+        ),
         title: const Text('Data Kriteria', style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle, size: 30),
-            onPressed: () => _showForm(null), // Tambah data baru
-          ),
-        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.green[700],
+        onPressed: () => _showForm(null),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       body: Column(
         children: [
-          // List Kriteria
+          // TOTAL BOBOT DI ATAS
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Total Bobot', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  _totalBobot.toStringAsFixed(2),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: (_totalBobot > 1.001 || _totalBobot < 0.999) ? Colors.red : Colors.green[700],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // LIST KRITERIA DI BAWAH
           Expanded(
             child: _listKriteria.isEmpty
                 ? const Center(child: Text('Belum ada data kriteria.'))
@@ -74,20 +101,16 @@ class _KriteriaScreenState extends State<KriteriaScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.green[50],
-                      // PERBAIKAN DI SINI: Hapus textColor dan pindahkan warnanya ke dalam TextStyle di bawah
-                      child: Text(
-                        '${index + 1}',
-                        style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold),
-                      ),
+                      child: Text('${index + 1}', style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold)),
                     ),
-                    title: Text(item['nama'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(item['nama'].toString().toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Bobot: ${item['bobot']} • ${item['jenis']}'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.green),
-                          onPressed: () => _showForm(item), // Edit data
+                          onPressed: () => _showForm(item),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
@@ -100,107 +123,75 @@ class _KriteriaScreenState extends State<KriteriaScreen> {
               },
             ),
           ),
-
-          // Total Bobot (Bagian Bawah sesuai Mockup)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Total Bobot', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(
-                  _totalBobot.toStringAsFixed(2),
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green[700]),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
   }
 
-  // Form Dialog Tambah / Edit Kriteria (Mockup 2a)
   void _showForm(Map<String, dynamic>? item) {
-    final nameController = TextEditingController();
-    final bobotController = TextEditingController();
-    String jenisKriteria = 'Benefit';
-
-    if (item != null) {
-      nameController.text = item['nama'];
-      bobotController.text = item['bobot'].toString();
-      jenisKriteria = item['jenis'];
-    }
+    final nameController = TextEditingController(text: item?['nama'] ?? '');
+    final bobotController = TextEditingController(text: item?['bobot']?.toString() ?? '');
+    String jenisKriteria = item?['jenis'] ?? 'Benefit';
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          top: 20, left: 20, right: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              item == null ? 'Tambah Kriteria' : 'Ubah Kriteria',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Nama Kriteria', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: bobotController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Bobot (0 - 1)', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: jenisKriteria,
-              items: ['Benefit', 'Cost'].map((label) => DropdownMenuItem(value: label, child: Text(label))).toList(),
-              onChanged: (value) => jenisKriteria = value!,
-              decoration: const InputDecoration(labelText: 'Jenis', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).viewPadding.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-                const SizedBox(width: 8),
+                Text(item == null ? 'Tambah Kriteria' : 'Ubah Kriteria', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Nama Kriteria', border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                TextField(controller: bobotController, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Bobot (Contoh: 0.25)', border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: jenisKriteria,
+                  items: ['Benefit', 'Cost'].map((label) => DropdownMenuItem(value: label, child: Text(label))).toList(),
+                  onChanged: (value) => setModalState(() => jenisKriteria = value!),
+                  decoration: const InputDecoration(labelText: 'Jenis', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 20),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700], foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700], minimumSize: const Size(double.infinity, 50)),
                   onPressed: () async {
                     final db = await _dbHelper.db;
+                    String namaBaru = nameController.text.toLowerCase();
+
                     Map<String, dynamic> row = {
-                      'nama': nameController.text,
+                      'nama': namaBaru,
                       'bobot': double.tryParse(bobotController.text) ?? 0.0,
                       'jenis': jenisKriteria,
                     };
 
+                    if (nameController.text.isEmpty || bobotController.text.isEmpty) return;
+
                     if (item == null) {
                       await db.insert(DBHelper.tableKriteria, row);
+                      await _dbHelper.addNewKriteriaColumn(namaBaru);
                     } else {
                       await db.update(DBHelper.tableKriteria, row, where: 'id = ?', whereArgs: [item['id']]);
                     }
 
+                    if (!mounted) return;
                     Navigator.pop(context);
                     _refreshKriteria();
                   },
-                  child: Text(item == null ? 'Simpan' : 'Perbarui'),
+                  child: const Text('Simpan', style: TextStyle(color: Colors.white)),
                 ),
+                const SizedBox(height: 10),
               ],
-            )
-          ],
+            ),
+          ),
         ),
       ),
     );

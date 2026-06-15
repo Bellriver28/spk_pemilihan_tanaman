@@ -1,13 +1,47 @@
+class Kriteria {
+  final int? id;
+  final String nama;
+  final double bobot;
+  final String jenis; // 'Benefit' atau 'Cost'
+
+  Kriteria({
+    this.id,
+    required this.nama,
+    required this.bobot,
+    required this.jenis,
+  });
+
+  // Konversi Database (Map) -> Objek
+  factory Kriteria.fromMap(Map<String, dynamic> map) {
+    return Kriteria(
+      id: map['id'],
+      nama: map['nama'],
+      bobot: (map['bobot'] as num).toDouble(),
+      jenis: map['jenis'],
+    );
+  }
+
+  // Konversi Objek -> Map (untuk Database)
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'nama': nama,
+      'bobot': bobot,
+      'jenis': jenis,
+    };
+  }
+}
+
 class Tanaman {
-  int? id;
-  String nama;
-  double n;
-  double p;
-  double k;
-  double temperature;
-  double humidity;
-  double ph;
-  double rainfall;
+  final int? id;
+  final String nama;
+  final double n;
+  final double p;
+  final double k;
+  final double temperature;
+  final double humidity;
+  final double ph;
+  final double rainfall;
 
   Tanaman({
     this.id,
@@ -21,7 +55,6 @@ class Tanaman {
     required this.rainfall,
   });
 
-  // Mengubah dari Map (Database) ke Objek Tanaman
   factory Tanaman.fromMap(Map<String, dynamic> map) {
     return Tanaman(
       id: map['id'],
@@ -36,7 +69,6 @@ class Tanaman {
     );
   }
 
-  // Mengubah dari Objek Tanaman ke Map (Untuk disimpan ke Database)
   Map<String, dynamic> toMap() {
     return {
       'id': id,

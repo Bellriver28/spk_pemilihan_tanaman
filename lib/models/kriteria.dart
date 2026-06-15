@@ -1,17 +1,11 @@
 class Kriteria {
-  int? id;
-  String nama;
-  double bobot;
-  String jenis; // 'Benefit' atau 'Cost'
+  final int? id;
+  final String nama;
+  final double bobot;
+  final String jenis; // 'Benefit' atau 'Cost'
 
-  Kriteria({
-    this.id,
-    required this.nama,
-    required this.bobot,
-    required this.jenis,
-  });
+  Kriteria({this.id, required this.nama, required this.bobot, required this.jenis});
 
-  // Mengubah dari Map (Database) ke Objek Kriteria
   factory Kriteria.fromMap(Map<String, dynamic> map) {
     return Kriteria(
       id: map['id'],
@@ -21,7 +15,7 @@ class Kriteria {
     );
   }
 
-  // Mengubah dari Objek Kriteria ke Map (Untuk disimpan ke Database)
+  // PENTING: Untuk simpan ke database
   Map<String, dynamic> toMap() {
     return {
       'id': id,
